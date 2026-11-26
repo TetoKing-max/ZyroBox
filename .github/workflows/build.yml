@@ -14,8 +14,9 @@ on:
 
 jobs:
   build_debug:
-    name: Build Universal FOSS Debug
+    name: Build Arm64 FOSS Debug
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     if: github.actor != 'dependabot[bot]'
     steps:
       - uses: actions/checkout@v5
@@ -34,18 +35,10 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Generate debug.keystore
+      - name: Use fixed debug keystore
         run: |
           mkdir -p ~/.android
-          keytool -genkey -v \
-            -keystore ~/.android/debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          cp .github/zyro-debug.keystore ~/.android/debug.keystore
 
       - name: Build Debug APK
         env:
@@ -59,12 +52,12 @@ jobs:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
           ONEDRIVE_CLIENT_ID: ${{ secrets.ONEDRIVE_CLIENT_ID }}
         run: |
-          ./gradlew assembleUniversalFossDebug --no-configuration-cache --console=plain --warning-mode summary
+          ./gradlew assembleArm64FossDebug --no-configuration-cache --no-daemon --console=plain --warning-mode summary
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-universal-foss-debug
-          path: app/build/outputs/apk/universalFoss/debug/*.apk
+          name: zyro-box-arm64
+          path: app/build/outputs/apk/arm64Foss/debug/*.apk
           # a debug apk is only for trying the build, after a week it's just eating actions storage
-          retention-days: 7
+          retention-days: 30
