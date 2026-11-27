@@ -1,0 +1,38 @@
+name: Publish Release
+
+# Runs after "CI & Debug Build" finishes OK and publishes its APK as a GitHub release,
+# which is where the app looks to tell you a new version is available.
+on:
+  workflow_run:
+    workflows: ["CI & Debug Build"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the APK built by the previous workflow
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: built
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+        run: |
+          APK=$(find built -name '*.apk' | head -n 1)
+          if [ -z "$APK" ]; then echo "No APK found"; exit 1; fi
+          N=$((1308 + RUN_NUMBER))
+          cp "$APK" ZyroBox-arm64.apk
+          gh release create "v8.5.0-build${N}" ZyroBox-arm64.apk \
+            --repo "${{ github.repository }}" \
+            --title "8.5.0 build#${N}" \
+            --notes "Zyro Box, compilación ${N}."

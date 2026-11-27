@@ -28,8 +28,10 @@ extensions.configure<ApplicationExtension> {
         applicationId = "com.mochyy.mochymusic"
         minSdk = 24
         targetSdk = 37
-        versionCode = 73
-        versionName = "8.5.0.0 build#1308"
+        // Zyro Box: every GitHub build gets a higher number, so the in-app updater can tell it is newer
+        val zyroRun = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
+        versionCode = 73 + zyroRun
+        versionName = "8.5.0.0 build#${1308 + zyroRun}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
